@@ -107,6 +107,7 @@ export default class App extends React.Component {
       .then((response) => response.json())
       .then((response) => this.setState({uuid: response.uuid}))
       .catch(error => console.error(error));
+      {/*TODO error handling*/}
 
       AsyncStorage.setItem('uuid', this.state.uuid)
     }
@@ -138,6 +139,7 @@ export default class App extends React.Component {
         })
         .then(response => this.state)
         .catch(error => console.error(error));
+        {/*TODO if status 401 getuuid() else if status not 200 store*/}
 
         {/*Send any stored data*/}
         if(this.state.numCached > 0) {
@@ -154,6 +156,8 @@ export default class App extends React.Component {
           })
           .then(response => this.state)
           .catch(error => console.error(error));
+          {/*TODO if status 401 getuuid() else if status not 200
+             do not clear cache*/}
 
           {/*Clear cache and set numCached to 0*/}
           AsyncStorage.setItem('lats', "")
@@ -184,8 +188,8 @@ export default class App extends React.Component {
           numCached: this.state.numCached + 1
         })
 
-        {/*Send cache if it contains 100 data points*/}
-        if (this.state.numCached > 50) {
+        {/*Send cache if it contains 25 data points*/}
+        if (this.state.numCached > 24) {
           {/*Send batch*/}
           lats = await AsyncStorage.getItem('lats')
           longs = await AsyncStorage.getItem('longs')
@@ -199,6 +203,8 @@ export default class App extends React.Component {
           })
           .then(response => this.state)
           .catch(error => console.error(error));
+          {/*TODO if status 401 getuuid() else if status not 200
+             do not clear cache*/}
 
           {/*Clear cache and set numCached to 0*/}
           AsyncStorage.setItem('lats', "")
