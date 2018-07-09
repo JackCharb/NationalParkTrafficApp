@@ -16,6 +16,11 @@ export default class App extends React.Component {
       connection: "none",
       isTracking: true
     };
+
+    AsyncStorage.setItem('lats', "")
+    AsyncStorage.setItem('longs', "")
+    AsyncStorage.setItem('times', "")
+
   }
   
   componentWillMount() {
@@ -82,10 +87,6 @@ export default class App extends React.Component {
   }
 
   async getUUID() {
-    AsyncStorage.setItem('lats', "")
-    AsyncStorage.setItem('longs', "")
-    AsyncStorage.setItem('times', "")
-
     {/*For testing purposes: AsyncStorage.removeItem("uuid");*/}
 
     var storedUUID = await AsyncStorage.getItem("uuid");
@@ -107,7 +108,6 @@ export default class App extends React.Component {
       .then((response) => response.json())
       .then((response) => this.setState({uuid: response.uuid}))
       .catch(error => console.error(error));
-      {/*TODO error handling*/}
 
       AsyncStorage.setItem('uuid', this.state.uuid)
     }
@@ -137,9 +137,29 @@ export default class App extends React.Component {
           body: 'uuid='.concat(this.state.uuid,'&time=', this.state.time, '&lat=', this.state.lat, '&lon=', this.state.long),
           method: 'POST'
         })
-        .then(response => this.state)
+        .then((response) => {
+          if (response.status == 401) {
+            this.getUUID()
+          }
+          if (response.status != 200 ) {
+            {/*If data send failed, cache data to send later*/}
+            if (this.state.numCached === 0) {
+              AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lats))
+              AsyncStorage.mergeItem('longs', JSON.stringify(this.state.longs))
+              AsyncStorage.mergeItem('times', JSON.stringify(this.state.times))
+            }
+            else {
+              AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lats)))
+              AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.longs)))
+              AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.times)))
+            }
+            {/*Increase count of cached points*/}
+            this.setState({
+              numCached: this.state.numCached + 1
+            })            
+          }
+        })
         .catch(error => console.error(error));
-        {/*TODO if status 401 getuuid() else if status not 200 store*/}
 
         {/*Send any stored data*/}
         if(this.state.numCached > 0) {
@@ -154,19 +174,23 @@ export default class App extends React.Component {
             body: 'uuid='.concat(this.state.uuid,'&times=', times, '&lats=', lats, '&lons=', longs),
             method: 'POST'
           })
-          .then(response => this.state)
-          .catch(error => console.error(error));
-          {/*TODO if status 401 getuuid() else if status not 200
-             do not clear cache*/}
-
-          {/*Clear cache and set numCached to 0*/}
-          AsyncStorage.setItem('lats', "")
-          AsyncStorage.setItem('longs', "")
-          AsyncStorage.setItem('times', "")
-
-          this.setState({
-            numCached: 0
+          .then((response) => {
+            if (response.status == 200) {
+              {/*Data is sent, cache can be cleared*/}
+              AsyncStorage.setItem('lats', "")
+              AsyncStorage.setItem('longs', "")
+              AsyncStorage.setItem('times', "")
+    
+              this.setState({
+                numCached: 0
+              })
+            }
+            else if (response.status == 401) {
+              {/*UUID is invalid, get a new one*/}
+              this.getUUID()
+            }
           })
+          .catch(error => console.error(error));
         }
 
       }
@@ -201,19 +225,23 @@ export default class App extends React.Component {
             body: 'uuid='.concat(this.state.uuid,'&times=', times, '&lats=', lats, '&lons=', longs),
             method: 'POST'
           })
-          .then(response => this.state)
-          .catch(error => console.error(error));
-          {/*TODO if status 401 getuuid() else if status not 200
-             do not clear cache*/}
-
-          {/*Clear cache and set numCached to 0*/}
-          AsyncStorage.setItem('lats', "")
-          AsyncStorage.setItem('longs', "")
-          AsyncStorage.setItem('times', "")
-
-          this.setState({
-            numCached: 0
+          .then((response) => {
+            if (response.status == 200) {
+              {/*Data is sent, cache can be cleared*/}
+              AsyncStorage.setItem('lats', "")
+              AsyncStorage.setItem('longs', "")
+              AsyncStorage.setItem('times', "")
+    
+              this.setState({
+                numCached: 0
+              })
+            }
+            else if (response.status == 401) {
+              {/*UUID is invalid, get a new one*/}
+              this.getUUID()
+            }
           })
+          .catch(error => console.error(error));
         }
       }
         
