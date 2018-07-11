@@ -118,9 +118,8 @@ export default class App extends React.Component {
   watchID = BackgroundGeolocation.watchPosition(async (position) => {
     console.log("connectionsdad: ", this.state.connection)
     {/*Check is user in within park bounds and allows tracking*/}
-    {/*TODO: use actual park bounds*/}
-    if ((this.state.isTracking) && (position.coords.longitude < 900) && (position.coords.longitude > -900)
-        && (position.coords.latitude < 900) && (position.coords.latitude > -900)) {
+    if ((this.state.isTracking) && (position.coords.longitude < -68.162249) && (position.coords.longitude > -68.432787)
+        && (position.coords.latitude < 44.448252) && (position.coords.latitude > 44.218395)) {
       this.setState({
         lat: position.coords.latitude,
         long: position.coords.longitude,
