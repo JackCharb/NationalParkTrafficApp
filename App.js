@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: 25,
-    //fontFamily: 'Roboto-Light',
+    fontFamily: 'Roboto-Light',
   },
 
   iOSB1Text:{
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 20,
     borderTopWidth: 16,
     borderBottomWidth: 20,
-    //fontFamily: 'Roboto-Light',
+    fontFamily: 'Roboto-Light',
   },
 
   iOSB2: {
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 70,
     top: 15,
-    //fontFamily: 'Roboto-Light',
+    fontFamily: 'Roboto-Light',
   },
 
   androidB2TextLeft: {
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 85,
     top: 15,
-    //fontFamily: 'Roboto-Light',
+    fontFamily: 'Roboto-Light',
   },
 
   iOSB2TextRight: {
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 105,
     top: 15,
-    //fontFamily: 'Roboto-Light',
+    fontFamily: 'Roboto-Light',
   },
 
   androidB2TextRight: {
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 125,
     top: 15,
-    //fontFamily: 'Roboto-Light',
+    fontFamily: 'Roboto-Light',
   },
 
   b3: {
