@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppRegistry, StyleSheet, Text, View, Button, Switch, AsyncStorage, NetInfo } from 'react-native';
+import { AppRegistry, StyleSheet, Text, View, Switch, StatusBar, AsyncStorage, NetInfo, Platform } from 'react-native';
 
 import BackgroundGeolocation from "react-native-background-geolocation";
 
@@ -14,7 +14,7 @@ export default class App extends React.Component {
       uuid: null,
       numCached: 0,
       connection: "none",
-      platform: Platform.OS
+      platform: Platform.OS,
       isTracking: true
     };
 
@@ -102,7 +102,7 @@ export default class App extends React.Component {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: 'appkey=9355552b2db866c13b123333d10603007101597ea87b75eb3ebb370c7748fb81&os='.concat(this.state.platform)
+        body: 'appkey=9355552b2db866c13b123333d10603007101597ea87b75eb3ebb370c7748fb81&os='.concat(this.state.platform),
         method: 'POST'
       })
       .then((response) => response.json())
