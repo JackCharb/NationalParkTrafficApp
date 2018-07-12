@@ -1,4 +1,4 @@
-package com.testdev;
+package com.wpi.acadiats;
 
 import android.app.Application;
 
