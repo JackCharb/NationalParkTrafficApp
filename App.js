@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppRegistry, StyleSheet, Text, View, Switch, StatusBar, AsyncStorage, NetInfo, Platform } from 'react-native';
+import { Alert, AppRegistry, StyleSheet, Text, View, Switch, StatusBar, ImageBackground, TouchableOpacity, AsyncStorage, NetInfo, Platform } from 'react-native';
 
 import BackgroundGeolocation from "react-native-background-geolocation";
 
@@ -11,13 +11,13 @@ export default class App extends React.Component {
       lat: 0.0,
       long: 0.0,
       time: 0,
-      uuid: null,
+      uuid: "null",
       numCached: 0,
       connection: "none",
       platform: Platform.OS,
-      isTracking: true
+      isTracking: true,
+      fontLoaded: true,
     };
-
     AsyncStorage.setItem('lats', "")
     AsyncStorage.setItem('longs', "")
     AsyncStorage.setItem('times', "")
@@ -42,8 +42,8 @@ export default class App extends React.Component {
     BackgroundGeolocation.on('providerchange', this.onProviderChange);
 
     BackgroundGeolocation.ready({
-      desiredAccuracy: 0,
-      distanceFilter: 10,
+      desiredAccuracy: 10,
+      distanceFilter: 5,
       debug: false,
       logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
       stopOnTerminate: true,
@@ -91,7 +91,7 @@ export default class App extends React.Component {
     {/*For testing purposes: AsyncStorage.removeItem("uuid");*/}
 
     var storedUUID = await AsyncStorage.getItem("uuid");
-    if (storedUUID !== null) {
+    if (storedUUID !== "null" && storedUUID !== null) {
       console.debug("use pre-existing uuid")
       this.setState({uuid: storedUUID})
     }
@@ -138,19 +138,22 @@ export default class App extends React.Component {
         })
         .then((response) => {
           if (response.status == 401) {
+            this.setState({
+              uuid: "null"
+            })   
             this.getUUID()
           }
           if (response.status != 200 ) {
             {/*If data send failed, cache data to send later*/}
             if (this.state.numCached === 0) {
-              AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lats))
-              AsyncStorage.mergeItem('longs', JSON.stringify(this.state.longs))
-              AsyncStorage.mergeItem('times', JSON.stringify(this.state.times))
+              AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lat))
+              AsyncStorage.mergeItem('longs', JSON.stringify(this.state.long))
+              AsyncStorage.mergeItem('times', JSON.stringify(this.state.time))
             }
             else {
-              AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lats)))
-              AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.longs)))
-              AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.times)))
+              AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lat)))
+              AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.long)))
+              AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.time)))
             }
             {/*Increase count of cached points*/}
             this.setState({
@@ -186,6 +189,9 @@ export default class App extends React.Component {
             }
             else if (response.status == 401) {
               {/*UUID is invalid, get a new one*/}
+              this.setState({
+                uuid: "null"
+              })   
               this.getUUID()
             }
           })
@@ -196,14 +202,14 @@ export default class App extends React.Component {
       else if (this.state.connection == "cell"){
         {/*Store*/}
         if (this.state.numCached === 0) {
-          AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lats))
-          AsyncStorage.mergeItem('longs', JSON.stringify(this.state.longs))
-          AsyncStorage.mergeItem('times', JSON.stringify(this.state.times))
+          AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lat))
+          AsyncStorage.mergeItem('longs', JSON.stringify(this.state.long))
+          AsyncStorage.mergeItem('times', JSON.stringify(this.state.time))
         }
         else {
-          AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lats)))
-          AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.longs)))
-          AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.times)))
+          AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lat)))
+          AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.long)))
+          AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.time)))
         }
         
         {/*Increase count of cached points*/}
@@ -237,6 +243,9 @@ export default class App extends React.Component {
             }
             else if (response.status == 401) {
               {/*UUID is invalid, get a new one*/}
+              this.setState({
+                uuid: "null"
+              })   
               this.getUUID()
             }
           })
@@ -247,14 +256,14 @@ export default class App extends React.Component {
       else {
         {/*Store*/}
         if (this.state.numCached === 0) {
-          AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lats))
-          AsyncStorage.mergeItem('longs', JSON.stringify(this.state.longs))
-          AsyncStorage.mergeItem('times', JSON.stringify(this.state.times))
+          AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lat))
+          AsyncStorage.mergeItem('longs', JSON.stringify(this.state.long))
+          AsyncStorage.mergeItem('times', JSON.stringify(this.state.time))
         }
         else {
-          AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lats)))
-          AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.longs)))
-          AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.times)))
+          AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lat)))
+          AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.long)))
+          AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.time)))
         }
 
         {/*Increase count of cached points*/}
@@ -265,7 +274,7 @@ export default class App extends React.Component {
 
     }
   },
-  (error) => alert(JSON.stringify(error)),
+  (error) => console.log(JSON.stringify(error)),
   {enableHighAccuracy: true, distanceFilter: 5})
  
   render() {
@@ -403,7 +412,7 @@ const styles = StyleSheet.create({
 
   imageBg: {
     flexGrow: 1,
-    height: null,
+    height: null	,
     width: null,
     alignItems: 'center',
     justifyContent: 'center',
@@ -451,7 +460,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: 25,
-    fontFamily: 'Roboto-Light',
   },
 
   iOSB1Text:{
@@ -464,7 +472,6 @@ const styles = StyleSheet.create({
     borderRightWidth: 20,
     borderTopWidth: 16,
     borderBottomWidth: 20,
-    fontFamily: 'Roboto-Light',
   },
 
   iOSB2: {
@@ -504,7 +511,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 70,
     top: 15,
-    fontFamily: 'Roboto-Light',
   },
 
   androidB2TextLeft: {
@@ -516,7 +522,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 85,
     top: 15,
-    fontFamily: 'Roboto-Light',
   },
 
   iOSB2TextRight: {
@@ -528,7 +533,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 105,
     top: 15,
-    fontFamily: 'Roboto-Light',
   },
 
   androidB2TextRight: {
@@ -540,7 +544,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 125,
     top: 15,
-    fontFamily: 'Roboto-Light',
   },
 
   b3: {
