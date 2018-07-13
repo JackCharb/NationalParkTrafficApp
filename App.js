@@ -15,13 +15,8 @@ export default class App extends React.Component {
       numCached: 0,
       connection: "none",
       platform: Platform.OS,
-      isTracking: true,
-      fontLoaded: true,
+      isTracking: true
     };
-    AsyncStorage.setItem('lats', "")
-    AsyncStorage.setItem('longs', "")
-    AsyncStorage.setItem('times', "")
-
   }
   
   componentWillMount() {
@@ -44,10 +39,9 @@ export default class App extends React.Component {
     BackgroundGeolocation.ready({
       desiredAccuracy: 10,
       distanceFilter: 5,
-      debug: false,
       logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
-      stopOnTerminate: true,
-      startOnBoot: false,
+      stopOnTerminate: false,
+      startOnBoot: true,
     }, (state) => {
       console.log("- BackgroundGeolocation is configured and ready: ", state.enabled);
 
@@ -87,16 +81,22 @@ export default class App extends React.Component {
     this.setState({connection: NetInfo.type})
   }
 
+  async initStorage() {
+    await AsyncStorage.setItem('lats', '&lats=')
+    await AsyncStorage.setItem('lons', '&lons=')
+    await AsyncStorage.setItem('times', '&times=')
+  }
+
   async getUUID() {
     {/*For testing purposes: AsyncStorage.removeItem("uuid");*/}
 
     var storedUUID = await AsyncStorage.getItem("uuid");
     if (storedUUID !== "null" && storedUUID !== null) {
-      console.debug("use pre-existing uuid")
+      console.log("use pre-existing uuid")
       this.setState({uuid: storedUUID})
     }
     else {
-      console.debug("request new uuid")
+      console.log("request new uuid")
       {/*Get UUID from server*/}
       await fetch('https://bhiqp.ky8.io/reg', {
         headers: {
@@ -109,14 +109,17 @@ export default class App extends React.Component {
       .then((response) => this.setState({uuid: response.uuid}))
       .catch(error => console.error(error));
 
-      AsyncStorage.setItem('uuid', this.state.uuid)
+      await AsyncStorage.setItem('uuid', this.state.uuid)
+      await AsyncStorage.setItem('lats', '&lats=')
+      await AsyncStorage.setItem('lons', '&lons=')
+      await AsyncStorage.setItem('times', '&times=')
     }
   }
 
-  ret = this.getUUID();
+  uuidret = this.getUUID();
+  storageret = this.initStorage();
 
   watchID = BackgroundGeolocation.watchPosition(async (position) => {
-    console.log("connectionsdad: ", this.state.connection)
     {/*Check is user in within park bounds and allows tracking*/}
     if ((this.state.isTracking) && (position.coords.longitude < -68.162249) && (position.coords.longitude > -68.432787)
         && (position.coords.latitude < 44.448252) && (position.coords.latitude > 44.218395)) {
@@ -128,7 +131,6 @@ export default class App extends React.Component {
 
       {/*Send data if phone has wifi*/}
       if (this.state.connection == "wifi") {
-        console.debug("send")
         fetch('https://bhiqp.ky8.io/report', {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -136,7 +138,7 @@ export default class App extends React.Component {
           body: 'uuid='.concat(this.state.uuid,'&time=', this.state.time, '&lat=', this.state.lat, '&lon=', this.state.long),
           method: 'POST'
         })
-        .then((response) => {
+        .then(async (response) => {
           if (response.status == 401) {
             this.setState({
               uuid: "null"
@@ -145,15 +147,32 @@ export default class App extends React.Component {
           }
           if (response.status != 200 ) {
             {/*If data send failed, cache data to send later*/}
+            {/*Store*/}
             if (this.state.numCached === 0) {
-              AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lat))
-              AsyncStorage.mergeItem('longs', JSON.stringify(this.state.long))
-              AsyncStorage.mergeItem('times', JSON.stringify(this.state.time))
+              var oldlats = await AsyncStorage.getItem('lats')
+              var oldlons = await AsyncStorage.getItem('lons')
+              var oldtimes = await AsyncStorage.getItem('times')
+    
+              var newlats = oldlats.concat(JSON.stringify(this.state.lat))
+              var newlons = oldlons.concat(JSON.stringify(this.state.long))
+              var newtimes = oldtimes.concat(JSON.stringify(this.state.time))
+    
+              await AsyncStorage.setItem('lats', newlats)
+              await AsyncStorage.setItem('lons', newlons)
+              await AsyncStorage.setItem('times', newtimes)
             }
             else {
-              AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lat)))
-              AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.long)))
-              AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.time)))
+              var oldlats = await AsyncStorage.getItem('lats')
+              var oldlons = await AsyncStorage.getItem('lons')
+              var oldtimes = await AsyncStorage.getItem('times')
+    
+              var newlats = oldlats.concat(',', JSON.stringify(this.state.lat))
+              var newlons = oldlons.concat(',', JSON.stringify(this.state.long))
+              var newtimes = oldtimes.concat(',', JSON.stringify(this.state.time))
+    
+              await AsyncStorage.setItem('lats', newlats)
+              await AsyncStorage.setItem('lons', newlons)
+              await AsyncStorage.setItem('times', newtimes)
             }
             {/*Increase count of cached points*/}
             this.setState({
@@ -166,22 +185,22 @@ export default class App extends React.Component {
         {/*Send any stored data*/}
         if(this.state.numCached > 0) {
           {/*Send batch*/}
-          lats = await AsyncStorage.getItem('lats')
-          longs = await AsyncStorage.getItem('longs')
-          times = await AsyncStorage.getItem('times')
+          var lats = await AsyncStorage.getItem('lats')
+          var longs = await AsyncStorage.getItem('lons')
+          var times = await AsyncStorage.getItem('times')
           fetch('https://bhiqp.ky8.io/batch_report', {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'uuid='.concat(this.state.uuid,'&times=', times, '&lats=', lats, '&lons=', longs),
+            body: 'uuid='.concat(this.state.uuid, times, lats, longs),
             method: 'POST'
           })
-          .then((response) => {
+          .then(async (response) => {
             if (response.status == 200) {
               {/*Data is sent, cache can be cleared*/}
-              AsyncStorage.setItem('lats', "")
-              AsyncStorage.setItem('longs', "")
-              AsyncStorage.setItem('times', "")
+              await AsyncStorage.setItem('lats', '&lats=')
+              await AsyncStorage.setItem('lons', '&lons=')
+              await AsyncStorage.setItem('times', '&times=')
     
               this.setState({
                 numCached: 0
@@ -202,14 +221,30 @@ export default class App extends React.Component {
       else if (this.state.connection == "cell"){
         {/*Store*/}
         if (this.state.numCached === 0) {
-          AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lat))
-          AsyncStorage.mergeItem('longs', JSON.stringify(this.state.long))
-          AsyncStorage.mergeItem('times', JSON.stringify(this.state.time))
+          var oldlats = await AsyncStorage.getItem('lats')
+          var oldlons = await AsyncStorage.getItem('lons')
+          var oldtimes = await AsyncStorage.getItem('times')
+
+          var newlats = oldlats.concat(JSON.stringify(this.state.lat))
+          var newlons = oldlons.concat(JSON.stringify(this.state.long))
+          var newtimes = oldtimes.concat(JSON.stringify(this.state.time))
+
+          await AsyncStorage.setItem('lats', newlats)
+          await AsyncStorage.setItem('lons', newlons)
+          await AsyncStorage.setItem('times', newtimes)
         }
         else {
-          AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lat)))
-          AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.long)))
-          AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.time)))
+          var oldlats = await AsyncStorage.getItem('lats')
+          var oldlons = await AsyncStorage.getItem('lons')
+          var oldtimes = await AsyncStorage.getItem('times')
+
+          var newlats = oldlats.concat(',', JSON.stringify(this.state.lat))
+          var newlons = oldlons.concat(',', JSON.stringify(this.state.long))
+          var newtimes = oldtimes.concat(',', JSON.stringify(this.state.time))
+
+          await AsyncStorage.setItem('lats', newlats)
+          await AsyncStorage.setItem('lons', newlons)
+          await AsyncStorage.setItem('times', newtimes)
         }
         
         {/*Increase count of cached points*/}
@@ -221,21 +256,21 @@ export default class App extends React.Component {
         if (this.state.numCached > 24) {
           {/*Send batch*/}
           lats = await AsyncStorage.getItem('lats')
-          longs = await AsyncStorage.getItem('longs')
+          longs = await AsyncStorage.getItem('lons')
           times = await AsyncStorage.getItem('times')
           fetch('https://bhiqp.ky8.io/batch_report', {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'uuid='.concat(this.state.uuid,'&times=', times, '&lats=', lats, '&lons=', longs),
+            body: 'uuid='.concat(this.state.uuid, times, lats, longs),
             method: 'POST'
           })
-          .then((response) => {
+          .then(async (response) => {
             if (response.status == 200) {
               {/*Data is sent, cache can be cleared*/}
-              AsyncStorage.setItem('lats', "")
-              AsyncStorage.setItem('longs', "")
-              AsyncStorage.setItem('times', "")
+              await AsyncStorage.setItem('lats', '&lats=')
+              await AsyncStorage.setItem('lons', '&lons=')
+              await AsyncStorage.setItem('times', '&times=')
     
               this.setState({
                 numCached: 0
@@ -256,14 +291,30 @@ export default class App extends React.Component {
       else {
         {/*Store*/}
         if (this.state.numCached === 0) {
-          AsyncStorage.mergeItem('lats', JSON.stringify(this.state.lat))
-          AsyncStorage.mergeItem('longs', JSON.stringify(this.state.long))
-          AsyncStorage.mergeItem('times', JSON.stringify(this.state.time))
+          var oldlats = await AsyncStorage.getItem('lats')
+          var oldlons = await AsyncStorage.getItem('lons')
+          var oldtimes = await AsyncStorage.getItem('times')
+
+          var newlats = oldlats.concat(JSON.stringify(this.state.lat))
+          var newlons = oldlons.concat(JSON.stringify(this.state.long))
+          var newtimes = oldtimes.concat(JSON.stringify(this.state.time))
+
+          await AsyncStorage.setItem('lats', newlats)
+          await AsyncStorage.setItem('lons', newlons)
+          await AsyncStorage.setItem('times', newtimes)
         }
         else {
-          AsyncStorage.mergeItem('lats', ','.concat(JSON.stringify(this.state.lat)))
-          AsyncStorage.mergeItem('longs', ','.concat(JSON.stringify(this.state.long)))
-          AsyncStorage.mergeItem('times', ','.concat(JSON.stringify(this.state.time)))
+          var oldlats = await AsyncStorage.getItem('lats')
+          var oldlons = await AsyncStorage.getItem('lons')
+          var oldtimes = await AsyncStorage.getItem('times')
+
+          var newlats = oldlats.concat(',', JSON.stringify(this.state.lat))
+          var newlons = oldlons.concat(',', JSON.stringify(this.state.long))
+          var newtimes = oldtimes.concat(',', JSON.stringify(this.state.time))
+
+          await AsyncStorage.setItem('lats', newlats)
+          await AsyncStorage.setItem('lons', newlons)
+          await AsyncStorage.setItem('times', newtimes)
         }
 
         {/*Increase count of cached points*/}
@@ -274,8 +325,8 @@ export default class App extends React.Component {
 
     }
   },
-  (error) => console.log(JSON.stringify(error)),
-  {enableHighAccuracy: true, distanceFilter: 5})
+  (error) => console.error(error),
+  {interval: 1500, desiredAccuracy: 0, persist: false})
  
   render() {
 
@@ -303,17 +354,11 @@ export default class App extends React.Component {
           blurRadius={Platform.OS === 'ios' ? 5 : 1}
         >
 
-          {this.state.fontLoaded ? (
-
           <View style={styles.headerView}>
             <Text style = {styles.headerText}>
               {'Acadia Traffic Data Collection'}
             </Text>
           </View>
-
-          ) : null}
-
-          {this.state.fontLoaded ? (
 
           <View style={styles.b1}>
             <Text style={b1Text}>
@@ -323,29 +368,19 @@ export default class App extends React.Component {
             </Text>
           </View>
 
-          ) : null}
-
-          {this.state.fontLoaded ? (
-
           <View style={b2}>
             <Text style={b2TextLeft}>
               Latitude:{'\n'}
               Longitude:
             </Text>
-
             <Text style={b2TextRight}>
-              {this.state.lat.toFixed(3)}{'\n'}
-              {this.state.long.toFixed(3)}{'\n'}
+              {this.state.lat.toFixed(6)}{'\n'}
+              {this.state.long.toFixed(6)}{'\n'}
             </Text>
           </View>
 
-          ) : null}
-
-          {this.state.fontLoaded ? (
-
           <View style={styles.b3}>
             <Text style={b3Text}>Allow Tracking</Text>
-
             <Switch
               style={styles.switch}
               value={this.state.isTracking}
@@ -353,24 +388,18 @@ export default class App extends React.Component {
             />
           </View>
 
-          ) : null}
-
-          {this.state.fontLoaded ? (
-
           <TouchableOpacity
             style={styles.optBtn}
             onPress={() => {
-
               Alert.alert (
                 'Warning',
                 'Are you sure you want to permenantly delete all the data your phone has collected?',
                 [
                   {text: 'Cancel'},
                   {text: 'OK', onPress: () =>
-
                     fetch('https://bhiqp.ky8.io/delete', {
                       headers: {
-                        'Conetent-Type': 'application/x-www-form-urlencode'
+                        'Content-Type': 'application/x-www-form-urlencode'
                       },
                       body: 'uuid='.concat(this.state.uuid),
                       method:'POST',
@@ -380,18 +409,12 @@ export default class App extends React.Component {
                   }
                 ]
               );
-
-            
             }}
           >
             <Text style={styles.optBtnText}>Delete Tracking Data</Text>
           </TouchableOpacity>
-
-          ) : null}
-          
         </ImageBackground>
       </View>
-
     );
   }
 }
@@ -515,12 +538,12 @@ const styles = StyleSheet.create({
 
   androidB2TextLeft: {
     color: '#fff',
-    textAlign:'right',
+    textAlign:'left',
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: 25,
     position: 'absolute',
-    left: 85,
+    left: 20,
     top: 15,
   },
 
@@ -542,7 +565,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     fontSize: 25,
     position: 'absolute',
-    right: 125,
+    right: 20,
     top: 15,
   },
 
