@@ -38,10 +38,10 @@ export default class App extends React.Component {
 
     BackgroundGeolocation.ready({
       desiredAccuracy: 10,
-      distanceFilter: 5,
+      distanceFilter: 10,
       logLevel: BackgroundGeolocation.LOG_LEVEL_VERBOSE,
-      stopOnTerminate: false,
-      startOnBoot: true,
+      stopOnTerminate: true,
+      startOnBoot: false,
     }, (state) => {
       console.log("- BackgroundGeolocation is configured and ready: ", state.enabled);
 
@@ -110,9 +110,6 @@ export default class App extends React.Component {
       .catch(error => console.error(error));
 
       await AsyncStorage.setItem('uuid', this.state.uuid)
-      await AsyncStorage.setItem('lats', '&lats=')
-      await AsyncStorage.setItem('lons', '&lons=')
-      await AsyncStorage.setItem('times', '&times=')
     }
   }
 
@@ -364,7 +361,7 @@ export default class App extends React.Component {
             <Text style={b1Text}>
               This application will help Acadia National Park officials decrease the park's heavy traffic and
               make visiting the park with a vehicle a less stressful experience.
-              We appreciate your support in making Acadia safer and preserving its incredible beauty.
+              We appreciate your support.
             </Text>
           </View>
 
@@ -453,7 +450,7 @@ const styles = StyleSheet.create({
 
   headerText: {
     position: 'absolute',
-    top: 15,
+    top: 0,
     left: 20,
     color: '#fff',
     alignContent: 'flex-start',
@@ -463,10 +460,10 @@ const styles = StyleSheet.create({
 
   b1: {
     position: 'absolute',
-    top: 90,
+    top: 70,
     left: 10,
     right: 10,
-    height: 230,
+    height: 250,
     backgroundColor: '#3d3c3c9f',
     borderWidth: 0.5,
     borderRadius: 2,
@@ -475,9 +472,10 @@ const styles = StyleSheet.create({
 
  androidB1Text: {
     position: 'absolute',
-    top: 20,
-    left: 20,
-    right: 20,
+    top: 15,
+    bottom: 15,
+    left: 15,
+    right: 15,
     color: '#fff',
     textAlign:'left',
     justifyContent: 'center',
@@ -491,6 +489,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: 21,
+    top: 15,
+    bottom: 15,
     borderLeftWidth: 20,
     borderRightWidth: 20,
     borderTopWidth: 16,
@@ -543,8 +543,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     fontSize: 25,
     position: 'absolute',
-    left: 20,
-    top: 15,
+    left: 15,
   },
 
   iOSB2TextRight: {
@@ -565,8 +564,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     fontSize: 25,
     position: 'absolute',
-    right: 20,
-    top: 15,
+    right: 15,
   },
 
   b3: {
@@ -593,7 +591,7 @@ const styles = StyleSheet.create({
 
   androidB3Text: {
     position: 'absolute',
-    left: 20,
+    left: 15,
     color:'#ffffff',
     fontSize: 25,
     alignItems: 'center',
