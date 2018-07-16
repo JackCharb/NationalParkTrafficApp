@@ -296,7 +296,7 @@ export default class App extends React.Component {
         >
 
           {this.state.fontLoaded ? (
-
+            
           <View style={styles.headerView}>
             <Text style = {styles.headerText}>
               {'Acadia Traffic Data Collection'}
