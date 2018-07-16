@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, AppRegistry, StyleSheet, Text, View, Switch, StatusBar, ImageBackground, TouchableOpacity, AsyncStorage, NetInfo, Platform } from 'react-native';
+import { Alert, AppRegistry, AppState, StyleSheet, Text, View, Switch, StatusBar, ImageBackground, TouchableOpacity, AsyncStorage, NetInfo, Platform } from 'react-native';
 
 import BackgroundGeolocation from "react-native-background-geolocation";
 
@@ -20,9 +20,6 @@ export default class App extends React.Component {
   }
   
   componentWillMount() {
-    ////
-    // 1.  Wire up event-listeners
-    //
 
     // This handler fires whenever bgGeo receives a location update.
     BackgroundGeolocation.on('location', this.onLocation, this.onError);
@@ -55,6 +52,7 @@ export default class App extends React.Component {
 
   componentWillUnmount() {
     BackgroundGeolocation.removeListeners();
+    AppState.removeEventListener('change', this._handleAppStateChange);
   }
 
   onLocation(location) {
@@ -75,10 +73,19 @@ export default class App extends React.Component {
 
   componentDidMount() {
     NetInfo.addEventListener('connectionChange', this._setConnection.bind(this));
+    AppState.addEventListener('change', this._handleAppStateChange);
   }
 
   _setConnection(NetInfo) {
     this.setState({connection: NetInfo.type})
+  }
+
+  _handleAppStateChange = (newAppState) => {
+    if (newAppState === 'active' || newAppState === 'background') {
+      BackgroundGeolocation.start(function() {
+        console.log("- Start success");
+      });
+    };
   }
 
   async initStorage() {
