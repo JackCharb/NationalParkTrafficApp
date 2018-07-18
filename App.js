@@ -124,6 +124,7 @@ export default class App extends React.Component {
   storageret = this.initStorage();
 
   watchID = BackgroundGeolocation.watchPosition(async (position) => {
+    console.log("thisisissis: ", this.state.uuid)
     {/*Check is user in within park bounds and allows tracking*/}
     if ((this.state.isTracking) && (position.coords.longitude < -68.162249) && (position.coords.longitude > -68.432787)
         && (position.coords.latitude < 44.448252) && (position.coords.latitude > 44.218395)) {
@@ -334,115 +335,110 @@ export default class App extends React.Component {
  
   render() {
 
-    var b1Text = Platform.OS === 'ios' ? styles.iOSB1Text : styles.androidB1Text;
-    var b2 = Platform.OS === 'ios' ? styles.iOSB2 : styles.androidB2;
-    //lat and long label
-    var b2TextLeft = Platform.OS === 'ios' ? styles.iOSB2TextLeft : styles.androidB2TextLeft;
-    //lat and long values
-    var b2TextRight = Platform.OS === 'ios' ? styles.iOSB2TextRight : styles.androidB2TextRight;
-    var b3Text = Platform.OS === 'ios' ? styles.iOSB3Text : styles.androidB3Text;
-
-
-    {/*Print position to the screen*/}
     return (
-
+  
       <View style={styles.container}>
-
+  
         <View style={styles.statusBar}>
           <StatusBar/>
         </View>
-
-        <ImageBackground
-          style={styles.imageBg}
-          source={require('./Images/acadia-national-park-maine.jpg')}
-          blurRadius={Platform.OS === 'ios' ? 5 : 1}
-        >
-
-          <View style={styles.headerView}>
-            <Text style = {styles.headerText}>
-              {'Acadia Traffic Data Collection'}
-            </Text>
-          </View>
-
-          <View style={styles.b1}>
-            <Text style={b1Text}>
-              This application will help Acadia National Park officials decrease the park's heavy traffic and
-              make visiting the park with a vehicle a less stressful experience.
-              We appreciate your support.
-            </Text>
-          </View>
-
-          <View style={b2}>
-            <Text style={b2TextLeft}>
-              Latitude:{'\n'}
-              Longitude:
-            </Text>
-            <Text style={b2TextRight}>
-              {this.state.lat.toFixed(6)}{'\n'}
-              {this.state.long.toFixed(6)}{'\n'}
-            </Text>
-          </View>
-
-          <View style={styles.b3}>
-            <Text style={b3Text}>Allow Tracking</Text>
-            <Switch
-              style={styles.switch}
-              value={this.state.isTracking}
-              onValueChange={(value) => this.setState({isTracking: value})}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.optBtn}
-            onPress={() => {
-              Alert.alert (
-                'Warning',
-                'Are you sure you want to permenantly delete all the data your phone has collected?',
-                [
-                  {text: 'Cancel'},
-                  {text: 'OK', onPress: () =>
-                    fetch('https://bhiqp.ky8.io/delete', {
-                      headers: {
-                        'Content-Type': 'application/x-www-form-urlencode'
-                      },
-                      body: 'uuid='.concat(this.state.uuid),
-                      method:'POST',
+  
+        <View style={styles.headerView}>
+  
+          <Text style = {styles.headerText}>
+            {'Acadia Traffic Solutions'}
+          </Text>
+  
+        </View>
+  
+        <View style = {styles.infoPara}>
+          <Text style={styles.text}>
+            Using this application will help Acadia National Park officials decrease the park's heavy traffic and
+            make visiting the park with a vehicle a less stressful experience.
+            We appreciate your support.
+          </Text>  
+        </View>
+  
+        <View style = {styles.allowTracking}>
+          <Text style={styles.text}>Allow Tracking</Text>
+        </View>
+  
+        <View style = {styles.switchPosition}>
+          <Switch
+            style={styles.switch}
+            value={this.state.isTracking}
+            onValueChange={(value) => this.setState({isTracking: value})}
+          />
+        </View>  
+  
+        <TouchableOpacity
+          style={styles.optBtn}
+          onPress={() => {
+  
+            Alert.alert (
+              'Warning',
+              'Are you sure you want to permenantly delete all the data your phone has collected?',
+              [
+                {text: 'Cancel'},
+                {text: 'OK', onPress: () =>
+                  fetch('https://bhiqp.ky8.io/delete', {
+                    headers: {
+                      'Conetent-Type': 'application/x-www-form-urlencode'
+                    },
+                    body: 'uuid='.concat(this.state.uuid),
+                    method:'POST',
+                  })
+                  .then((response) => {
+                    if (respose.status === 400) {
+                      Alert.alert(
+                        'Connection failed.',
+                        'Connection failed. Try again later or contact the developers at bhiqp@wpi.edu \n\nUUID: '.concat(this.state.uuid)
+                      )
+                    }
+                    this.setState({
+                      isTracking: false
                     })
-                    .then(response => this.state)
-                    .catch(error => console.error(error))
-                  }
-                ]
-              );
-            }}
+                  })
+                  .catch(error => console.error(error))
+                }
+              ]
+            );
+          }}
           >
-            <Text style={styles.optBtnText}>Delete Tracking Data</Text>
-          </TouchableOpacity>
-        </ImageBackground>
+          <Text style={styles.optBtnText}>Delete Tracking Data</Text>
+        </TouchableOpacity>
+  
+        <View style = {styles.bottom}>
+          <Text style = {styles.bottomText}>
+            App Icon credits: Nick Roach
+          </Text>
+        </View>
+  
       </View>
-    );
+  
+    )
+  
   }
 }
 
 AppRegistry.registerComponent('App', () => App);
 
-//b1 representing blur box 1 (top)
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
+    backgroundColor: '#ffffff'
   },
-  
+
+  text: {
+    color: '#000000',
+    marginLeft: 0,
+    fontSize: 20,
+  },
+
   statusBar: {
     height: Platform.OS === 'ios' ? 20 : StatusBar.currentHeight,
     backgroundColor: '#4885ed'
-  },
-
-  imageBg: {
-    flexGrow: 1,
-    height: null	,
-    width: null,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   headerView: {
@@ -457,162 +453,52 @@ const styles = StyleSheet.create({
 
   headerText: {
     position: 'absolute',
-    top: 0,
+    top: 15,
     left: 20,
     color: '#fff',
     alignContent: 'flex-start',
-    fontSize: Platform.OS === 'ios' ? 20 : 25,
+    fontSize: 20,
     justifyContent: 'center',
   },
 
-  b1: {
+  infoPara: {
     position: 'absolute',
-    top: 70,
-    left: 10,
-    right: 10,
-    height: 250,
-    backgroundColor: '#3d3c3c9f',
-    borderWidth: 0.5,
-    borderRadius: 2,
-    borderColor: '#282828'
+    top: '15%',
+    marginLeft: 20,
+    marginRight: 20,
   },
 
- androidB1Text: {
+  bottom: {
     position: 'absolute',
-    top: 15,
-    bottom: 15,
-    left: 15,
-    right: 15,
-    color: '#fff',
-    textAlign:'left',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 25,
+    top: '95%',
+    marginBottom: 5,
+    marginLeft: 20,
+    marginLeft: 0
   },
 
-  iOSB1Text:{
-    color:'#fff',
-    textAlign:'left',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 21,
-    top: 15,
-    bottom: 15,
-    borderLeftWidth: 20,
-    borderRightWidth: 20,
-    borderTopWidth: 16,
-    borderBottomWidth: 20,
+  bottomText: {
+    fontSize: Platform.OS === 'ios' ? 10 : 15,
+    marginLeft: '7%'
   },
 
-  iOSB2: {
+  allowTracking: {
     position: 'absolute',
-    top: 356,
-    left: 10,
-    right: 10,
-    height: 80,
-    backgroundColor: '#3d3c3c9f',
-    borderWidth: 0.5,
-    borderRadius: 2,
-    borderColor: '#282828',
-    justifyContent: 'center',
-    alignContent: 'center'
-  },
-
-  androidB2: {
-    position: 'absolute',
-    top: 363,
-    left: 10,
-    right: 10,
-    height: 80,
-    backgroundColor: '#3d3c3c9f',
-    borderWidth: 0.5,
-    borderRadius: 2,
-    borderColor: '#282828',
-    justifyContent: 'center',
-    alignContent: 'center'
-  },
-
-  iOSB2TextLeft: {
-    color: '#fff',
-    textAlign:'right',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 21,
-    position: 'absolute',
-    left: 70,
-    top: 15,
-  },
-
-  androidB2TextLeft: {
-    color: '#fff',
-    textAlign:'left',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 25,
-    position: 'absolute',
-    left: 15,
-  },
-
-  iOSB2TextRight: {
-    color:'#fff',
-    textAlign:'right',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 21,
-    position: 'absolute',
-    right: 105,
-    top: 15,
-  },
-
-  androidB2TextRight: {
-    color: '#fff',
-    textAlign:'right',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 25,
-    position: 'absolute',
-    right: 15,
-  },
-
-  b3: {
-    position: 'absolute',
-    right: 10,
-    left: 10,
-    height: 60,
-    bottom: 115,
-    backgroundColor: '#3d3c3c9f',
-    borderWidth: 0.5,
-    borderRadius: 2,
-    borderColor: '#282828',
-    justifyContent: 'center',
-    alignContent: 'center'
-  },
-
-  iOSB3Text: {
-    color:'#ffffff',
-    fontSize: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderLeftWidth: 20,
-  },
-
-  androidB3Text: {
-    position: 'absolute',
-    left: 15,
-    color:'#ffffff',
-    fontSize: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: '60%',
+    marginLeft: '7%',
   },
 
   switch: {
+  },
+
+  switchPosition: {
     position: 'absolute',
-    right: 20,
+    top: '60%',
+    right: '10%',
   },
 
   optBtn: {
     position: 'absolute',
-    bottom: 20,
+    bottom: '15%',
     height: 60,
     left: 10,
     right: 10,
@@ -625,7 +511,7 @@ const styles = StyleSheet.create({
   optBtnText: {
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: Platform.OS === 'ios' ? 20 : 25,
-    color: '#ffffff'
+    fontSize: 20,
+    color: '#ffffff',
   }
-});
+})
