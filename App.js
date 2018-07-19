@@ -78,13 +78,12 @@ export default class App extends React.Component {
 
   _setConnection(NetInfo) {
     this.setState({connection: NetInfo.type})
+    console.log("big if true: ", NetInfo.type)
   }
 
   _handleAppStateChange = (newAppState) => {
     if (newAppState === 'active' || newAppState === 'background') {
-      BackgroundGeolocation.start(function() {
-        console.log("- Start success");
-      });
+      console.log("would handle")
     };
   }
 
@@ -140,7 +139,7 @@ export default class App extends React.Component {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: 'uuid='.concat(this.state.uuid,'&time=', this.state.time, '&lat=', this.state.lat, '&lon=', this.state.long),
+          body: 'uuid='.concat(this.state.uuid,'&time=', this.state.time, '&lat=', this.state.lat, '&lon=', this.state.long, '&conn=', this.state.connection),
           method: 'POST'
         })
         .then(async (response) => {
@@ -197,7 +196,7 @@ export default class App extends React.Component {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'uuid='.concat(this.state.uuid, times, lats, longs),
+            body: 'uuid='.concat(this.state.uuid, times, lats, longs, '&conn=', this.state.connection),
             method: 'POST'
           })
           .then(async (response) => {
@@ -223,7 +222,7 @@ export default class App extends React.Component {
         }
 
       }
-      else if (this.state.connection == "cell"){
+      else if (this.state.connection == "cellular"){
         {/*Store*/}
         if (this.state.numCached === 0) {
           var oldlats = await AsyncStorage.getItem('lats')
@@ -260,14 +259,14 @@ export default class App extends React.Component {
         {/*Send cache if it contains 25 data points*/}
         if (this.state.numCached > 24) {
           {/*Send batch*/}
-          lats = await AsyncStorage.getItem('lats')
-          longs = await AsyncStorage.getItem('lons')
-          times = await AsyncStorage.getItem('times')
+          var lats = await AsyncStorage.getItem('lats')
+          var longs = await AsyncStorage.getItem('lons')
+          var times = await AsyncStorage.getItem('times')
           fetch('https://bhiqp.ky8.io/batch_report', {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'uuid='.concat(this.state.uuid, times, lats, longs),
+            body: 'uuid='.concat(this.state.uuid, times, lats, longs, '&conn=', this.state.connection),
             method: 'POST'
           })
           .then(async (response) => {
@@ -292,7 +291,6 @@ export default class App extends React.Component {
           .catch(error => console.error(error));
         }
       }
-        
       else {
         {/*Store*/}
         if (this.state.numCached === 0) {
@@ -331,7 +329,7 @@ export default class App extends React.Component {
     }
   },
   (error) => console.error(error),
-  {interval: 1500, desiredAccuracy: 0, persist: false})
+  {interval: 1500, desiredAccuracy: 10, persist: false})
  
   render() {
 
@@ -383,13 +381,13 @@ export default class App extends React.Component {
                 {text: 'OK', onPress: () =>
                   fetch('https://bhiqp.ky8.io/delete', {
                     headers: {
-                      'Conetent-Type': 'application/x-www-form-urlencode'
+                      'Content-Type': 'application/x-www-form-urlencoded'
                     },
                     body: 'uuid='.concat(this.state.uuid),
                     method:'POST',
                   })
                   .then((response) => {
-                    if (respose.status === 400) {
+                    if (response.status == 400) {
                       Alert.alert(
                         'Connection failed.',
                         'Connection failed. Try again later or contact the developers at bhiqp@wpi.edu \n\nUUID: '.concat(this.state.uuid)
